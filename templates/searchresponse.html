@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Makeup API</title>
+</head>
+<body style="font-family: 'Baskerville Old Face'">
+<div style="height: 50px"></div>
+<div style="text-align: center;"><span style="font-size: 40pt; font-weight: bold">Search Results</span>
+<h3><a href='/'>Search for something else?</a></h3></div>
+<br>
+<table width="100%" cellspacing="0" cellpadding="10" border="0">
+    {% for product in products %}
+        <tr>
+            <td width="10%"></td>
+            <td width="30%" align="center"><a href='{{product.product_link}}' target="_blank"><img src='{{product.image}}' width="250px" height="250px"></a></td>
+            <td><p><div style="font-size: large; font-weight: bold">{{product.name}}        ID: {{product.id}}</div>
+                <br>From {{product.brand}} which can be found at <a href="{{product.website}}">their website</a>.
+                <br>Price: ${{product.price}}  Purchase <a href="{{product.product_link}}">here</a>.
+                <br>Product Type: {{product.type}}
+                <br>Description: {{product.description}}
+                <br><a href="{{product.image}}">See full image here.</a><br></td>
+            <td width="10%"></td>
+        </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

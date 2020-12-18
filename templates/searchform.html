@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{page_title}}</title>
+</head>
+<div style="height: 40px"></div>
+<body style="font-family: 'Baskerville Old Face'; background-color: #F1DEDE">
+<div style="text-align: center;"><span style="font-size: 40pt; font-weight: bold">Makeup Search</span>
+    <div style="height: 25px"></div>
+<form action="gresponse" method="get">
+    <label for="product">What kind of makeup product are you looking for?</label>
+    <br><div style="height: 15px"></div>
+    <input type="text" id="product" name="product" />
+    <input type="submit" value="Search" name="gobtn" id=""submit"/> </form>
+
+    <div style="height: 15px"></div>
+    <div>See what you can search by below.</div>
+    <div style="height: 25px"></div>
+{% if prompt %}
+    <div style="text-align: center; color: darkred" class= 'formtitle'>{{prompt}}</div>
+{% endif %}
+
+    <div style="height: 25px"></div>
+
+
+    <table width="100%">
+        <tr>
+            <td width="20%"></td>
+            <td width="60%">
+                <table width="100%" cellspacing="0" cellpadding="10" border="1">
+                        <tr style="font-weight: bolder; font-size: large; text-align: left; color: white; background-color: lightslategrey">
+                            <td colspan="2">Brands</td>
+                            <td>Product Types</td>
+                            <td>Product Categories</td>
+                        </tr>
+                        <tr style="text-align: left">
+                            <td style="vertical-align: top; border-right-style: hidden">{% for brand in brandlist[0:29] %}
+                            {{brand}}
+                            <br>{% endfor %}</td>
+                            <td style="vertical-align: top;border-left-style: hidden">{% for brand in brandlist[29:] %}
+                            {{brand}}
+                            <br>{% endfor %}</td>
+                            <td style="vertical-align: top;">{% for type in producttypelist %}
+                            {{type}}
+                            <br>{% endfor %}</td>
+                            <td style="vertical-align: top;">{% for category in productcategorylist %}
+                            {{category}}
+                            <br>{% endfor %}</td>
+                        </tr>
+                </table>
+            </td>
+            <td width="20%"></td>
+        </tr>
+    </table>
+<div style="height: 45px"></div>
+</body>
+</html>
