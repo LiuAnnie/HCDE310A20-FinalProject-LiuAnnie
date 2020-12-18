@@ -1,7 +1,7 @@
 # This final project builds off of my work in HW5.
 
 from flask import Flask, render_template, request
-import urllib.request, urllib.error, urllib.parse, json, logging
+import urllib.request, urllib.error, urllib.parse, json, logging, random
 
 app = Flask(__name__)
 
@@ -13,8 +13,8 @@ def takebreak(s):
     print("------------------{}------------------".format(s))
 
 ###################################################################
-takebreak("Check if Brand or Product Exist")
-print("Search by brand, product type, and product category")
+# takebreak("Check if Brand or Product Exist")
+# print("Search by brand, product type, and product category")
 brandlist = ["almay", "alva", "anna sui", "annabelle", "benefit", "boosh", "burt's bees", "butter london", "c'est moi'", "cargo cosmetics", "china glaze", "clinique", "coastal classic creation", "colourpop", "covergirl", "dalish", "deciem", "dior", "dr. hauschka", "e.l.f.", "essie", "fenty", "glossier", "green people", "iman", "l'oreal", "lotus cosmetics usa", "maia's mineral galaxy", "marcelle", "marienatie", "maybelline", "milani", "mineral fusion", "misa", "mistura", "moov", "nudus", "nyx", "orly", "pacifica", "penny lane organics", "physicians formula", "piggy paint", "pure anada", "rejuva minerals", "revlon", "sally b's skin yummies", "salon perfect", "sante", "sinful colours", "smashbox", "stila", "suncoat", "w3llpeople", "wet n wild", "zorah", "zorah biocosmetiques"]
 producttypelist = ["blush", "bronzer", "eyebrow", "eyeliner", "eyeshadow", "foundation", "lip liner", "lipstick", "mascara", "nail polish"]
 productcategorylist = ["lipstick", "lip gloss", "liquid", "lip stain", "pencil", "concealer", "contour", "bb cc", "cream", "mineral", "powder", "highlighter", "palette", "gel"]
@@ -40,8 +40,8 @@ def isproductcategory(productcategory):
     else:
         return False
 
-takebreak('Making the Request URL and Returning Dictionaries')
-print("Search by: brand, product type, product category (subcategory of type), price, and id")
+# takebreak('Making the Request URL and Returning Dictionaries')
+# print("Search by: brand, product type, product category (subcategory of type), price, and id")
 baseurl = "http://makeup-api.herokuapp.com/api/v1/products.json"
 
 # find_brand() returns the given brand's makeup dictionary.
@@ -158,6 +158,7 @@ def singleproductdict(productid):
     productdata = json.loads(productrequeststr)
     return productdata
 
+
 # Product Class
 class Product:
     """A class to represent a makeup product."""
@@ -166,20 +167,49 @@ class Product:
         self.id = dict['id']
         if dict['brand'] != None:
             self.brand = dict['brand'].strip()
+        else:
+            self.brand = 'No Brand Recorded'
         self.price = dict['price']
         self.product_link = dict['product_link']
         if dict['description'] != None:
             self.description = "{}...".format(dict['description'][:350].strip())
-        self.rating = dict['rating']
+        if dict['rating'] != None:
+            self.rating = dict['rating']
+        else:
+            self.rating = 'No Rating Recorded'
         self.image = dict['image_link']
         self.type = dict['product_type'].strip()
-        self.category = dict['category']
-        self.website = dict['website_link']
+        if dict['category'] != None:
+            self.category = dict['category']
+        else:
+            self.category = 'No Category Recorded'
+        if dict['website_link'] != None:
+            self.website = dict['website_link']
+        else:
+            self.website = 'No Website Recorded'
+        self.tagcount = len(dict['tag_list'])
+        tags = ""
+        if self.tagcount != 0:
+            for i in range(self.tagcount):
+                if i == self.tagcount-1:
+                    tags += dict['tag_list'][i]
+                else:
+                    tags += "{}, ".format(dict['tag_list'][i])
+        self.tags = tags
+        # Product Colors
         if 'product_colors' in dict:
             self.colorcount = len(dict['product_colors'])
             colors = ""
+            # hex = []
             for i in range(self.colorcount):
-                colors += "{}   ".format(dict['product_colors'][i]['colour_name'])
+                # hex = hex.append(dict['product_colors'][i]['hex_value'])
+                if i == self.colorcount-1:
+                    colors += "{}".format(dict['product_colors'][i]['colour_name'])
+                elif dict['product_colors'][i]['colour_name'] != None:
+                    colors += "{},   ".format(dict['product_colors'][i]['colour_name'])
+                else:
+                    colors += "This color name is not recorded.   "
+            # self.hex = hex
             self.colors = colors
         else:
             self.colorcount = 0
@@ -192,17 +222,34 @@ class Product:
             outputstring = "From {} which can be found at {},\n{}  ID: {}\n\tPrice: ${}  Purchase at {}\n\tProduct Type: {}\n\tDescription: {}\n\tSee image here: {}".format(self.brand, self.website, self.name, self.id, self.price ,self.product_link, self.type,self.description, self.image)
         return outputstring
 
+# I want users to be able to generate a new makeup routine.
+# For this, I will build a dictionary that contains product objects
+# from each product type.
+def newmakeuproutine():
+    searchdict = []
+    for type in producttypelist:
+        searchresults = productdict(type)
+        randomitem = random.choice(searchresults)
+        searchdict.append(randomitem)
+    products = [Product(item) for item in searchdict]
+    return products
 
-# glossier = branddict('revlon')
-# products = [Product(product) for product in glossier]
-# for product in products:
+# for product in newmakeuproutine():
 #     print(product)
-#     print()
 
 @app.route('/')
 def main():
     app.logger.info("In MainHandler")
     return render_template('searchform.html', page_title="Makeup Search Form",brandlist=brandlist, producttypelist=producttypelist, productcategorylist=productcategorylist)
+
+@app.route('/newroutine')
+def newroutine():
+    products = newmakeuproutine()
+    price = 0
+    for product in products:
+        price += float(product.price)
+    price = round(price, 2)
+    return render_template('routine.html', product= 'A New Routine', products=products, price=price)
 
 @app.route('/gresponse')
 def giveresponse():
