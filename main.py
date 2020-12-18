@@ -116,7 +116,7 @@ def product_category_dict(productcategory, brand = None):
 # producttype: default to None
 # Note: I recognize there are more possible elif cases I could have presented, but I think
 # that the ones I prioritized make the most sense.
-def product_price_lt_dict(price, brand = None, producttype = None):
+def product_price_lt_dict(price, brand = None, producttype = None, productcat = None):
     if price < 0:
         return "Please input a nonnegative price."
     baserequest = '{}?price_less_than={}'.format(baseurl, price)
@@ -141,6 +141,13 @@ def product_price_lt_dict(price, brand = None, producttype = None):
             productrequest = '{}?product_type={}&price_less_than={}'.format(baseurl, producttype, price)
         else:
             print("Something went wrong.\nLooking for {}. There was an issue with the product type inputted. Check that the type exists in the dictionary.\nNow showing all products under {}.".format(producttype, price))
+            productrequest = baserequest
+    elif productcat != None:
+        productcat = productcat.strip().lower()
+        if isproductcategory(productcat):
+            productrequest = '{}?product_category={}&price_less_than={}'.format(baseurl, productcat, price)
+        else:
+            print("Something went wrong.\nLooking for {}. There was an issue with the product category inputted. Check that the category exists in the dictionary.\nNow showing all products under {}.".format(producttype, price))
             productrequest = baserequest
     else:
         productrequest = baserequest
@@ -169,7 +176,10 @@ class Product:
             self.brand = dict['brand'].strip()
         else:
             self.brand = 'No Brand Recorded'
-        self.price = dict['price']
+        if dict['price'] != None:
+            self.price = dict['price']
+        else:
+            self.price = 0.0
         self.product_link = dict['product_link']
         if dict['description'] != None:
             self.description = "{}...".format(dict['description'][:350].strip())
@@ -234,9 +244,6 @@ def newmakeuproutine():
     products = [Product(item) for item in searchdict]
     return products
 
-# for product in newmakeuproutine():
-#     print(product)
-
 @app.route('/')
 def main():
     app.logger.info("In MainHandler")
@@ -254,8 +261,43 @@ def newroutine():
 @app.route('/gresponse')
 def giveresponse():
     product = request.args.get('product')
+    product = product.lower()
+    # minprice = request.args.get('minprice')
+    maxprice = request.args.get('maxprice')
     app.logger.info(product)
-    if product:  # If the form is filled in, do this.
+    app.logger.info(maxprice)
+    if product and maxprice:
+        if maxprice.isdigit():
+            maxprice = int(maxprice)
+            if isproducttype(product):
+                requestedproducts = product_price_lt_dict(maxprice, brand=None, producttype=product, productcat=None)
+                products = [Product(product) for product in requestedproducts]
+                return render_template('searchresponse.html', product="{} Under ${}".format(product,maxprice), products=products)
+            elif isbrand(product):
+                requestedproducts = product_price_lt_dict(maxprice, brand=product, producttype=None, productcat=None)
+                products = [Product(product) for product in requestedproducts]
+                return render_template('searchresponse.html', product="{} Under ${}".format(product,maxprice), products=products)
+            elif isproductcategory(product):
+                requestedproducts = product_price_lt_dict(maxprice, brand= None, producttype=None, productcat=product)
+                products = [Product(product) for product in requestedproducts]
+                return render_template('searchresponse.html', product="{} Under ${}".format(product,maxprice), products=products)
+            else:
+                return render_template('searchform.html', page_title="Makeup Search Form - Error", brandlist=brandlist,
+                                       producttypelist=producttypelist, productcategorylist=productcategorylist,
+                                       prompt="Something went wrong. Did you input a valid brand, product type, or product category?")
+        else:
+            return render_template('searchform.html', page_title="Makeup Search Form - Error", brandlist=brandlist, producttypelist=producttypelist, productcategorylist=productcategorylist, prompt= "Something went wrong. Did input a number for Maximum Price?")
+    elif maxprice:
+        if maxprice.isdigit():
+            maxprice = int(maxprice)
+            requestedproducts = product_price_lt_dict(maxprice)
+            products = [Product(product) for product in requestedproducts]
+            return render_template('searchresponse.html', product='Products under ${}'.format(maxprice), products=products)
+        else:
+            return render_template('searchform.html', page_title="Makeup Search Form - Error", brandlist=brandlist,
+                                   producttypelist=producttypelist, productcategorylist=productcategorylist,
+                                   prompt="Something went wrong. Did input a number for Maximum Price?")
+    elif product:  # If the form is filled in, do this.
         if isproducttype(product):
             requestedproducts = productdict(product)
             products = [Product(product) for product in requestedproducts]
